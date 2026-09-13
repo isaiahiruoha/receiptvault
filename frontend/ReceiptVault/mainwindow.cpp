@@ -1,30 +1,25 @@
 #include "mainwindow.h"
-#include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QLabel>
 #include <QMessageBox>
 #include <QFile>
-#include <QPainter>
 #include <QDebug>
 #include <QFileDialog>
 #include <QtCharts/QPieSeries>
 #include <QtCharts/QChart>
 #include <QtCharts/QChartView>
-#include <QHeaderView>
 #include "pages/DatabaseManager.h"
 #include <QCryptographicHash>
 #include <QInputDialog>
+#include <QLineEdit>
 #include <QProcess>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMenuBar>
 #include <QMenu>
-
-
-using namespace Qt;
+#include <QStandardPaths>
+#include <QDir>
+#include <QApplication>
 
 // constructor for MainWindow
 MainWindow::MainWindow(QWidget *parent)
@@ -32,9 +27,18 @@ MainWindow::MainWindow(QWidget *parent)
 {
 
 
+    // Resolve a stable, writable location for the database so it works whether
+    // the app is run from Qt Creator or launched as a bundled .app (a relative
+    // path here depends on the launch working directory, which is why it broke).
+    // The schema is created on first run by DatabaseManager::createTables().
+    QString dataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QDir().mkpath(dataDir);
+    QString dbPath = dataDir + "/receiptvault.db";
+
     // use DatabaseManager to open the database
-    if (!DatabaseManager::instance().openDatabase("../../../../../../../backend/db/receiptvault.db")) {
-        QMessageBox::critical(this, "Database Connection Error", "Unable to connect to the database.");
+    if (!DatabaseManager::instance().openDatabase(dbPath)) {
+        QMessageBox::critical(this, "Database Connection Error",
+                              "Unable to connect to the database at:\n" + dbPath);
         exit(EXIT_FAILURE);
     }
 
@@ -143,8 +147,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(dashboardPage, &DashboardPage::logoutRequested, [this]() {
         // clear any sensitive information
-        loginPage->findChild<QLineEdit*>("loginUsernameEdit")->clear();
-        loginPage->findChild<QLineEdit*>("loginPasswordEdit")->clear();
+        loginPage->clearFields();
         currentUsername.clear();
         currentUserId = -1; // reset currentUserId
         // navigate back to the login page
@@ -282,9 +285,16 @@ void MainWindow::handleUploadReceipt()
     QString fileName = QFileDialog::getOpenFileName(this, "Select Receipt PDF", "",
                                                     "Images (*.pdf *.jpg *.jpeg *.png);;All Files (*)");
     if (!fileName.isEmpty()) {
-        // define the python executable and script path
-        QString pythonExecutable = "python3"; // might need to change to "python" depending on the system
-        QString scriptPath = "C:/Users/Lenovo/Documents/GitHub/Elec376_F24_group7/backend/ml/experiments/LayoutLmV3_Inference_Script.py"; // UPDATE THIS ONCE PYTHON DONE
+        // Absolute path to the project's Python venv interpreter. Using an
+        // absolute path (not bare "python3") is required: a .app launched from
+        // Finder has a minimal PATH and would otherwise hit the /usr/bin/python3
+        // Xcode stub, which pops the "install command line developer tools" dialog.
+        // Overridable via environment variable so this isn't locked to one
+        // developer's machine; falls back to the original hardcoded path.
+        QString pythonExecutable = qEnvironmentVariable("RECEIPTVAULT_PYTHON",
+            "/Users/isaiah/Desktop/Career/Projects/receiptvault/backend/ml/venv/bin/python");
+        QString scriptPath = qEnvironmentVariable("RECEIPTVAULT_ML_SCRIPT",
+            "/Users/isaiah/Desktop/Career/Projects/receiptvault/backend/ml/experiments/LayoutLmV3_Inference_Script.py");
 
         // prepare the process arguments which includes the path the pdf
         QStringList arguments;
@@ -295,18 +305,28 @@ void MainWindow::handleUploadReceipt()
         pythonProcess.setProgram(pythonExecutable);
         pythonProcess.setArguments(arguments);
 
+        // The first receipt scan cold-imports PyTorch and loads a ~500 MB model,
+        // which can take well over the default 30s (especially while Spotlight is
+        // still indexing the venv). Show a busy cursor and wait up to 5 minutes.
+        QApplication::setOverrideCursor(Qt::WaitCursor);
+
         // start the Python script
         pythonProcess.start();
-        if (!pythonProcess.waitForStarted()) {
+        if (!pythonProcess.waitForStarted(30000)) {
+            QApplication::restoreOverrideCursor();
             QMessageBox::critical(this, "Error", "Failed to start Python process.");
             qDebug() << "Python process failed to start.";
             return;
         }
 
-        // wait for the Python script to finish
-        if (!pythonProcess.waitForFinished()) {
-            QMessageBox::critical(this, "Error", "Python process did not finish.");
-            qDebug() << "Python process did not finish.";
+        // wait for the Python script to finish (up to 5 minutes)
+        bool finished = pythonProcess.waitForFinished(300000);
+        QApplication::restoreOverrideCursor();
+        if (!finished) {
+            QMessageBox::critical(this, "Error",
+                                  "Receipt scanning timed out. Please try again "
+                                  "(the first scan loads the model and is slowest).");
+            qDebug() << "Python process did not finish within timeout.";
             return;
         }
 
@@ -315,11 +335,16 @@ void MainWindow::handleUploadReceipt()
         QString errorOutput = pythonProcess.readAllStandardError();
 
         qDebug() << output << "Output from Python Script";
+        if (!errorOutput.isEmpty())
+            qDebug() << "Python stderr (non-fatal):" << errorOutput;
 
-        // check for Python errors
-        if (!errorOutput.isEmpty()) {
-            QMessageBox::critical(this, "Python Error", errorOutput);
-            qDebug() << "Python Error:" << errorOutput;
+        // Only treat a non-zero exit code as failure. ML libraries emit harmless
+        // warnings on stderr, so stderr being non-empty does NOT mean an error;
+        // genuine failures are reported by the script as a non-zero exit.
+        if (pythonProcess.exitCode() != 0) {
+            QMessageBox::critical(this, "Python Error",
+                                  errorOutput.isEmpty() ? output : errorOutput);
+            qDebug() << "Python exited with code" << pythonProcess.exitCode();
             return;
         }
 

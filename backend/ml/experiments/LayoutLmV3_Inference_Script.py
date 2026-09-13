@@ -13,21 +13,34 @@ from transformers import AutoModelForTokenClassification, AutoProcessor
 from PIL import Image
 import sys
 import json
-import joblib
-from PIL import Image
 import pytesseract #OCR library for text recognition
 from pdf2image import convert_from_path #To convert PDF to image
-from PIL import ImageDraw
 
+import os
 import warnings
 
+# Keep stdout clean: only the final JSON should be printed there. Silence the
+# noisy library warnings/logging that would otherwise land on stderr.
+os.environ.setdefault("TRANSFORMERS_VERBOSITY", "error")
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
+
+# Ensure the Homebrew binaries (tesseract for OCR, poppler for PDF conversion)
+# are discoverable. A .app launched from Finder has a minimal PATH that excludes
+# /opt/homebrew/bin, so without this the OCR/PDF steps fail only in the bundled app.
+os.environ["PATH"] = "/opt/homebrew/bin:/usr/local/bin:" + os.environ.get("PATH", "")
+warnings.simplefilter("ignore")
 warnings.simplefilter("ignore", category=FutureWarning)
+
+# Resolve the fine-tuned model directory relative to this script so it works on
+# any machine (was previously a hardcoded Windows path).
+DEFAULT_MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model")
 
 
 #Handles reading and processing recipt images using the tained model
 class ReceiptReader:
   #Load pre-trained model 
-  def __init__(self, path_to_model="C:\\Users\\Lenovo\\Documents\\GitHub\\Elec376_F24_group7\\backend\\ml\\experiments\\model"):
+  def __init__(self, path_to_model=DEFAULT_MODEL_PATH):
     self.model = AutoModelForTokenClassification.from_pretrained(path_to_model)
     self.model.eval()
     self.processor = AutoProcessor.from_pretrained(path_to_model, apply_ocr=True)      
@@ -96,7 +109,7 @@ class ReceiptReader:
 #-------------------- ReceiptInformationExtractor --------------------------  
 
 class ReceiptInformationExtractor:
-  def __init__(self, path_to_model="C:\\Users\\Lenovo\\Documents\\GitHub\\Elec376_F24_group7\\backend\\ml\\experiments\\model"):
+  def __init__(self, path_to_model=DEFAULT_MODEL_PATH):
     self.receipt_reader = ReceiptReader(path_to_model)
   
   def __call__(self, image):

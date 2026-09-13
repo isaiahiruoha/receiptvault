@@ -1,22 +1,13 @@
 #include "ReceiptsPage.h"
 #include "pages/CategoryManagerDialog.h" // Include category manager dialog
 #include "ui_ReceiptsPage.h" // Include the generated UI header
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QLabel>
-#include <QHeaderView>
 #include <QDebug>
 #include "DatabaseManager.h"
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QComboBox>
 #include <QMessageBox>
-#include <QInputDialog>
 #include <QDialog>
-#include <QFormLayout>
-#include <QLineEdit>
-#include <QDateEdit>
-#include <QDialogButtonBox>
 
 // constructor
 ReceiptsPage::ReceiptsPage(QWidget *parent)

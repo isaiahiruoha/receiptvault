@@ -1,4 +1,5 @@
 #include "LoginPage.h"
+#include "ui_LoginPage.h" // ui header for managing the ui design
 #include <QMessageBox> // For showing warnings
 
 // constructor
@@ -29,4 +30,11 @@ LoginPage::LoginPage(QWidget *parent)
 LoginPage::~LoginPage()
 {
     delete ui; // clean up the UI object
+}
+
+// clears the username/password fields (e.g. after logout)
+void LoginPage::clearFields()
+{
+    ui->loginUsernameEdit->clear();
+    ui->loginPasswordEdit->clear();
 }

@@ -2,7 +2,6 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QDebug>
-#include <QCryptographicHash>
 
 // Access the singleton instance
 DatabaseManager& DatabaseManager::instance()

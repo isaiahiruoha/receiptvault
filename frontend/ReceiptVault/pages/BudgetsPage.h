@@ -36,8 +36,6 @@ private slots:
 private:
     int currentUserId; // stores the id of the current user
     Ui::BudgetsPage *ui; // pointer to ui elements
-
-    void refreshBudgetsTable(); // updates the table to show the latest budgets
 };
 
 #endif

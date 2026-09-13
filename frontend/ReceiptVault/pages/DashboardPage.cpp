@@ -5,9 +5,6 @@
 #include <QtCharts/QPieSeries> // for pie chart series
 #include <QtCharts/QBarCategoryAxis> // for bar chart axis
 #include <QtCharts/QValueAxis> // for value axis
-#include <QMap> // for mapping data
-
-using namespace Qt;
 
 // constructor
 DashboardPage::DashboardPage(QWidget *parent)

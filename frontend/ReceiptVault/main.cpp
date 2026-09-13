@@ -8,6 +8,10 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
+    // Stable identity so QStandardPaths resolves a consistent data directory
+    // (~/Library/Application Support/ReceiptVault on macOS).
+    QApplication::setApplicationName("ReceiptVault");
+
     // Set the application icon
     a.setWindowIcon(QIcon(":/icons/ReceiptVault.png"));
 

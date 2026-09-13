@@ -42,7 +42,6 @@ QLabel#appTitle {
     color: #E0E0E0;
     text-align: center;
     border: none;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 QLabel#label_AnalyticsTitle {

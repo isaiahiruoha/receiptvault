@@ -2,7 +2,10 @@
 #define CREATEACCOUNTPAGE_H
 
 #include <QWidget> // for QWidget base class
-#include "ui_CreateAccountPage.h" // ui header for managing the ui design
+
+namespace Ui {
+class CreateAccountPage; // forward declaration of ui class
+}
 
 class CreateAccountPage : public QWidget
 {

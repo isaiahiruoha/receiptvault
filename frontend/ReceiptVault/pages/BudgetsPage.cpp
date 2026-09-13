@@ -1,10 +1,10 @@
 #include "BudgetsPage.h"
 #include "ui_BudgetsPage.h" // Include the generated UI header
 #include <QMessageBox>
-#include <QInputDialog>
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QComboBox>
+#include <QLineEdit>
 #include <QDateEdit>
 #include <QDialog>
 #include <QDialogButtonBox>

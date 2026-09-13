@@ -34,8 +34,6 @@ public slots:
 private:
     Ui::ReceiptsPage *ui; // pointer to ui elements for this page
     int currentUserId; // stores the id of the current user
-
-    void refreshReceiptsTable(); // refreshes the receipts table with updated data
 };
 
 #endif

@@ -8,7 +8,6 @@
 #include <QHBoxLayout> // for horizontal layout
 #include <QInputDialog> // for input dialog
 #include <QMessageBox> // for message boxes
-#include "DatabaseManager.h" // for database operations
 
 class CategoryManagerDialog : public QDialog
 {

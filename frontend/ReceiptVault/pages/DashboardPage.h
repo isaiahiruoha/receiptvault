@@ -27,8 +27,6 @@ public:
         const QList<QPair<QString, double>> &spendingData // data for spending distribution
         );
 
-    Ui::DashboardPage *ui; // pointer to ui elements for this page
-
 signals:
     void navigateToReceipts(); // signal to navigate to the receipts page
     void navigateToAnalytics(); // signal to navigate to the analytics page
@@ -36,8 +34,7 @@ signals:
     void logoutRequested(); // signal to log out the user
 
 private:
-    void updateSpendingFrequencyHeatmap(); // updates the spending frequency heatmap
-
+    Ui::DashboardPage *ui; // pointer to ui elements for this page
     int currentUserId; // stores the id of the current user
 
 public:

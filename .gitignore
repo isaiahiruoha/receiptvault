@@ -1,0 +1,3 @@
+
+# Python virtual environment (local only, never commit)
+backend/ml/venv/

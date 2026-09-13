@@ -9,8 +9,6 @@
 #include <QDebug> // for debugging
 #include <QtCharts/QValueAxis> // for value axis
 
-using namespace Qt;
-
 AnalyticsPage::AnalyticsPage(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::AnalyticsPage)
@@ -100,7 +98,7 @@ void AnalyticsPage::updateMonthlyTrend(const QList<QPair<QString, double>> &data
 
     // **Remove existing axes**
     QList<QAbstractAxis*> axes = chart->axes();
-    foreach (QAbstractAxis *axis, axes) {
+    for (QAbstractAxis *axis : axes) {
         chart->removeAxis(axis);
         delete axis; // Delete the axis to prevent memory leaks
     }
@@ -154,7 +152,7 @@ void AnalyticsPage::updateCategoryComparison(const QList<QPair<QString, double>>
 
     // clear axis
     QList<QAbstractAxis*> axes = chart->axes();
-    foreach (QAbstractAxis *axis, axes) {
+    for (QAbstractAxis *axis : axes) {
         chart->removeAxis(axis);
         delete axis; // Delete the axis to prevent memory leaks
     }
@@ -210,7 +208,7 @@ void AnalyticsPage::updateTopStores(const QList<QPair<QString, double>> &data)
 
     // remove axis
     QList<QAbstractAxis*> axes = chart->axes();
-    foreach (QAbstractAxis *axis, axes) {
+    for (QAbstractAxis *axis : axes) {
         chart->removeAxis(axis);
         delete axis; // Delete the axis to prevent memory leaks
     }

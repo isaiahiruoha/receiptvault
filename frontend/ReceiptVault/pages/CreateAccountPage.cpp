@@ -1,4 +1,5 @@
 #include "CreateAccountPage.h"
+#include "ui_CreateAccountPage.h" // ui header for managing the ui design
 #include <QMessageBox> // for showing message boxes
 
 // constructor

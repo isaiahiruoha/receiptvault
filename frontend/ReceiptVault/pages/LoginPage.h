@@ -2,7 +2,10 @@
 #define LOGINPAGE_H
 
 #include <QWidget> // for QWidget base class
-#include "ui_LoginPage.h" // ui header for managing the ui design
+
+namespace Ui {
+class LoginPage; // forward declaration of ui class
+}
 
 class LoginPage : public QWidget
 {
@@ -11,6 +14,8 @@ class LoginPage : public QWidget
 public:
     explicit LoginPage(QWidget *parent = nullptr); // constructor to set up the widget
     ~LoginPage(); // destructor to clean up resources
+
+    void clearFields(); // clears the username/password fields (e.g. on logout)
 
 signals:
     void loginRequested(const QString &username, const QString &password); // signal to request login with username and password

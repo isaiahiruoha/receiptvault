@@ -1,4 +1,5 @@
 #include "CategoryManagerDialog.h"
+#include "DatabaseManager.h" // for database operations
 
 // constructor for category manager dialog
 CategoryManagerDialog::CategoryManagerDialog(QWidget *parent) : QDialog(parent)
