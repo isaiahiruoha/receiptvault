@@ -34,6 +34,12 @@ bool DatabaseManager::openDatabase(const QString &databasePath)
         return false;
     } else {
         qDebug() << "Connected to the SQLite database successfully!";
+
+        QSqlQuery pragmaQuery(db);
+        if (!pragmaQuery.exec("PRAGMA foreign_keys = ON;")) {
+            qDebug() << "Failed to enable foreign key enforcement: " << pragmaQuery.lastError().text();
+        }
+
         return createTables(); // Create tables if the database opened successfully
     }
 }
