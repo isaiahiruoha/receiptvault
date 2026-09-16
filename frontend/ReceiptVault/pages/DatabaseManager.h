@@ -28,6 +28,7 @@ public:
 
     // methods for managing expenses
     bool addExpense(int userId, int categoryId, const QString &store, const QString &date, double amount, const QString &description); // adds a new expense
+    bool deleteExpense(int expenseId, int userId); // deletes an expense by id, scoped to the owning user
     QList<QPair<QString, double>> getCategoryExpenses(int userId); // gets total expenses grouped by category for a user
     QList<QPair<QString, double>> getTopStores(int userId, int limit = 5); // gets top stores by spending for a user, limited to a specified number
 

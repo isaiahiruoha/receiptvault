@@ -28,7 +28,6 @@ private slots:
     void handleUploadReceipt(); // handles receipt upload functionality
     void handleNavigateToAnalytics(); // navigates to the analytics page
     void handleEditReceipt(int expenseId); // handles editing of a specific receipt
-    void toggleTheme(); // toggles between light and dark mode
 
 private:
     QStackedWidget *stackedWidget; // stack to manage switching between pages
@@ -47,6 +46,7 @@ private:
     QMap<QWidget*, QString> originalStyles; // map to store original widget styles for light mode
 
     int getCurrentUserId(); // gets the current user ID
+    QString normalizeReceiptDate(QString date); // reformats an extracted receipt date to yyyy-MM-dd, or "" if unparseable
 
     QString currentUsername; // stores the current user's username
     int currentUserId; // stores the current user's ID

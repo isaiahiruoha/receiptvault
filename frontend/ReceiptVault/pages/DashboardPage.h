@@ -35,10 +35,6 @@ signals:
 
 private:
     Ui::DashboardPage *ui; // pointer to ui elements for this page
-    int currentUserId; // stores the id of the current user
-
-public:
-    void setCurrentUserId(int userId) { currentUserId = userId; } // sets the current user id
 };
 
 #endif

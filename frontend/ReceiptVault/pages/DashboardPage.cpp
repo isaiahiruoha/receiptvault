@@ -8,7 +8,7 @@
 
 // constructor
 DashboardPage::DashboardPage(QWidget *parent)
-    : QWidget(parent), ui(new Ui::DashboardPage), currentUserId(-1) // initialize ui and set user id to -1
+    : QWidget(parent), ui(new Ui::DashboardPage)
 {
     ui->setupUi(this); // set up the ui from the .ui file
 

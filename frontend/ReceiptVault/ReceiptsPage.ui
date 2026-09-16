@@ -51,7 +51,7 @@ QLineEdit, QComboBox {
      <property name="styleSheet">
       <string notr="true">QLabel {
     color: black;
-    font: bold 35px &quot;Palatino Linotype&quot;;
+    font: bold 35px &quot;Palatino&quot;;
     padding: 10px;
 }
 </string>
@@ -268,6 +268,37 @@ QPushButton:pressed {
        </property>
        <property name="text">
         <string>Edit Receipt</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="button_DeleteReceipt">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton {
+    background-color: rgb(244, 67, 54);
+    border: none;
+    border-radius: 15px;
+    color: white;
+    padding: 10px 20px;
+    font: bold 15px &quot;Arial&quot;;
+}
+
+QPushButton:hover {
+    background-color: rgb(229, 57, 53);
+}
+
+QPushButton:pressed {
+    background-color: rgb(198, 40, 40);
+}</string>
+       </property>
+       <property name="text">
+        <string>Delete Receipt</string>
        </property>
       </widget>
      </item>

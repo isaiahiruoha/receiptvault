@@ -20,6 +20,13 @@
 #include <QStandardPaths>
 #include <QDir>
 #include <QApplication>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QVBoxLayout>
+#include <QLabel>
+#include <QRandomGenerator>
+#include <QDateTime>
+#include <QDate>
 
 // constructor for MainWindow
 MainWindow::MainWindow(QWidget *parent)
@@ -163,8 +170,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(budgetsPage, &BudgetsPage::navigateToDashboard, this, &MainWindow::navigateToDashboard);
 
     connect(receiptsPage, &ReceiptsPage::editReceipt, this, &MainWindow::handleEditReceipt);
-
-    this->setStyleSheet("background-color: #FFFFFF; color: #000000;");
 }
 
 void MainWindow::applyStyles(bool darkMode)
@@ -198,23 +203,6 @@ void MainWindow::applyStyles(bool darkMode)
 // destructor for MainWindow
 MainWindow::~MainWindow()
 {
-}
-
-void MainWindow::toggleTheme()
-{
-    if (isUpdatingTheme) return; // Prevent recursive updates
-
-    toggleDarkMode = !toggleDarkMode;
-    isUpdatingTheme = true;
-
-    if (toggleDarkMode) {
-        clearInlineStyles(this); // clear inline styles for dark mode
-        applyStyles(true);       // apply dark mode stylesheet
-    } else {
-        restoreInlineStyles(this); // restore original styles for light mode
-        applyStyles(false);        // apply light mode stylesheet
-    }
-
 }
 
 void MainWindow::clearInlineStyles(QWidget* widget) {
@@ -270,6 +258,38 @@ void MainWindow::navigateToLogin()
     stackedWidget->setCurrentWidget(loginPage);
 }
 
+// Reformats a date extracted from a receipt (M/D/Y, D-M-Y, two-digit years,
+// etc.) into yyyy-MM-dd. Returns "" if the format can't be recognized.
+QString MainWindow::normalizeReceiptDate(QString date)
+{
+    date.replace("/", "-");
+
+    QStringList dateParts = date.split('-');
+    if (dateParts.size() != 3) {
+        return "";
+    }
+
+    QString yearPart = dateParts[2];
+    if (yearPart.size() == 2) {
+        // Two-digit years <=50 are assumed 20xx, otherwise 19xx - matches
+        // the common "pivot year" convention (e.g. strptime's %y behavior).
+        int year = yearPart.toInt();
+        yearPart = (year <= 50 ? "20" : "19") + QString::number(year);
+        dateParts[2] = yearPart;
+    }
+
+    if (dateParts[0].size() == 2 && dateParts[1].size() == 2 && dateParts[2].size() == 4) {
+        // MM-DD-YYYY or DD-MM-YYYY - flip to YYYY-MM-DD
+        if (dateParts[0].toInt() <= 12) {
+            return dateParts[2] + '-' + dateParts[0] + '-' + dateParts[1];
+        }
+        return dateParts[2] + '-' + dateParts[1] + '-' + dateParts[0];
+    }
+    if (dateParts[0].size() == 4 && dateParts[1].size() == 2 && dateParts[2].size() == 2) {
+        return date; // already yyyy-MM-dd
+    }
+    return "";
+}
 
 // function to handle receipt upload
 void MainWindow::handleUploadReceipt()
@@ -291,8 +311,12 @@ void MainWindow::handleUploadReceipt()
         // Xcode stub, which pops the "install command line developer tools" dialog.
         // Overridable via environment variable so this isn't locked to one
         // developer's machine; falls back to the original hardcoded path.
+        // venv lives outside ~/Desktop deliberately: iCloud's Desktop &
+        // Documents sync intercepts every file access under Desktop through
+        // its File Provider daemon, which adds crippling per-file latency
+        // across PyTorch's tens of thousands of import-time file reads.
         QString pythonExecutable = qEnvironmentVariable("RECEIPTVAULT_PYTHON",
-            "/Users/isaiah/Desktop/Career/Projects/receiptvault/backend/ml/venv/bin/python");
+            "/Users/isaiah/.receiptvault-venv/bin/python");
         QString scriptPath = qEnvironmentVariable("RECEIPTVAULT_ML_SCRIPT",
             "/Users/isaiah/Desktop/Career/Projects/receiptvault/backend/ml/experiments/LayoutLmV3_Inference_Script.py");
 
@@ -357,89 +381,49 @@ void MainWindow::handleUploadReceipt()
             return;
         }
 
-        qDebug() << "Parsed output to jsonDoc";
-
         QJsonObject jsonObj = jsonDoc.object();
-
-        qDebug() << "Parsed output to jsonObject";
 
         //Parse store from json
         QString store = jsonObj["company"].toString();
 
         //parse total as a double from json
         QString totalString = jsonObj["total"].toString();
-
-        qDebug() << "totalString";
         totalString.remove('$');
-        double totalAmount = totalString.toDouble();
-        qDebug() << "totalString good";
 
-        // Parse date from JSON
-        QString date = jsonObj["date"].toString();
-        qDebug() << "Original date:" << date;
-
-        // Replace any '/' with '-'
-        date.replace("/", "-");
-
-        qDebug() << "Date with '-': " << date;
-
-        // Validate and format date
-        QStringList dateParts = date.split('-');
-        if (dateParts.size() == 3) {
-
-            QString yearPart = dateParts[2];
-
-
-            // Convert two digit year to standard full format
-            if (yearPart.size() == 2) {
-                int year = yearPart.toInt();
-                if (year <= 50) {
-                    yearPart = "20" + QString::number(year);
-                } else {
-                    yearPart = "19" + QString::number(year);
-                }
-                dateParts[2] = yearPart;
-                qDebug() << "Converted two-digit year to four digits:" << yearPart;
-            }
-
-            if (dateParts[0].size() == 2 && dateParts[1].size() == 2 && dateParts[2].size() == 4) {
-                // MM-DD-YYYY or DD-MM-YYYY format
-                if (dateParts[0].toInt() <= 12) {
-                    // Assume it's MM-DD-YYYY and flip to YYYY-MM-DD
-                    date = dateParts[2] + '-' + dateParts[0] + '-' + dateParts[1];
-                } else {
-                    // Assume it's DD-MM-YYYY and flip to YYYY-MM-DD
-                    date = dateParts[2] + '-' + dateParts[1] + '-' + dateParts[0];
-                }
-                qDebug() << "Formatted date:" << date;
-            } else if (dateParts[0].size() == 4 && dateParts[1].size() == 2 && dateParts[2].size() == 2) {
-                // Already in YYYY-MM-DD format
-                qDebug() << "Date is already in YYYY-MM-DD format.";
-            } else {
-                // Invalid date parts size
-                date = "";
-                qDebug() << "Invalid date format. Resetting to empty string.";
-            }
-        } else {
-            // If dateParts size is not 3 after splitting
-            date = "";
-            qDebug() << "Invalid date format with incorrect separators. Resetting to empty string.";
+        bool totalOk = false;
+        double totalAmount = totalString.toDouble(&totalOk);
+        if (!totalOk) {
+            QMessageBox::warning(this, "Upload Error", "Could not read a total from this receipt.");
+            return;
         }
 
+        // Parse date from JSON
+        QString date = normalizeReceiptDate(jsonObj["date"].toString());
 
-        qDebug() << jsonObj;
-        qDebug() << store;
-        qDebug() << totalAmount;
-        qDebug() << date;
+        // Require the user to actually pick a category - no silent default.
+        QDialog categoryDialog(this);
+        categoryDialog.setWindowTitle("Select Category");
+        QVBoxLayout *dialogLayout = new QVBoxLayout(&categoryDialog);
+        dialogLayout->addWidget(new QLabel("Choose a category for this receipt:"));
 
-        // assign a default category or allow the user to select
-        QComboBox *categoryComboBox = new QComboBox(this);
+        QComboBox *categoryComboBox = new QComboBox(&categoryDialog);
         receiptsPage->populateCategoryComboBox(categoryComboBox);
+        categoryComboBox->setCurrentIndex(-1); // force a deliberate choice, no default
+        dialogLayout->addWidget(categoryComboBox);
+
+        QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &categoryDialog);
+        dialogLayout->addWidget(buttonBox);
+        connect(buttonBox, &QDialogButtonBox::accepted, &categoryDialog, &QDialog::accept);
+        connect(buttonBox, &QDialogButtonBox::rejected, &categoryDialog, &QDialog::reject);
+
+        if (categoryDialog.exec() != QDialog::Accepted) {
+            return; // user cancelled the upload
+        }
+
         bool ok;
         int selectedCategoryId = categoryComboBox->currentData().toInt(&ok);
-        if (!ok) {
+        if (!ok || categoryComboBox->currentIndex() == -1) {
             QMessageBox::warning(this, "Input Error", "Please select a valid category.");
-            delete categoryComboBox;
             return;
         }
 
@@ -568,8 +552,8 @@ void MainWindow::handleLogin(const QString &username, const QString &password)
 void MainWindow::handleCreateAccount(const QString &username, const QString &password)
 {
 
-    // generate a unique salt (salting enhances the security of hashed passwords by adding random data)
-    QString salt = QString::number(QDateTime::currentMSecsSinceEpoch());
+    // random salt, not a timestamp - a timestamp is guessable
+    QString salt = QString::number(QRandomGenerator::global()->generate64(), 16);
 
     // hash the password with the salt using SHA-256
     QByteArray saltedPassword = password.toUtf8() + salt.toUtf8();

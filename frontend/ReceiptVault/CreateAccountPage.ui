@@ -238,7 +238,7 @@ QLineEdit:focus {
     <widget class="QLabel" name="label_CreateAccount">
      <property name="font">
       <font>
-       <family>Palatino Linotype</family>
+       <family>Palatino</family>
        <pointsize>-1</pointsize>
        <italic>false</italic>
        <bold>true</bold>
@@ -248,7 +248,7 @@ QLineEdit:focus {
       <string notr="true">QLabel {
     color: black; 
 
-    font: bold 35px &quot;Palatino Linotype&quot;;
+    font: bold 35px &quot;Palatino&quot;;
     text-align: center;
 }
 

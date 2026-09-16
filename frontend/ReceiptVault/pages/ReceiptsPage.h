@@ -30,6 +30,7 @@ signals:
 
 public slots:
     void editSelectedReceipt(); // handles editing the selected receipt
+    void deleteSelectedReceipt(); // handles deleting the selected receipt
 
 private:
     Ui::ReceiptsPage *ui; // pointer to ui elements for this page

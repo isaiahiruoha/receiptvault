@@ -156,7 +156,7 @@ QComboBox QAbstractItemView {
      <property name="styleSheet">
       <string notr="true">QLabel  {
     color: black;
-    font: bold 35px &quot;Palatino Linotype&quot;;
+    font: bold 35px &quot;Palatino&quot;;
     padding: 10px;
 }</string>
      </property>

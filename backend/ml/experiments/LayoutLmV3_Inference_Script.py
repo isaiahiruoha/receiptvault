@@ -13,7 +13,8 @@ from transformers import AutoModelForTokenClassification, AutoProcessor
 from PIL import Image
 import sys
 import json
-import pytesseract #OCR library for text recognition
+# pytesseract itself isn't called directly - AutoProcessor(apply_ocr=True)
+# uses it internally, but it still has to be installed.
 from pdf2image import convert_from_path #To convert PDF to image
 
 import os

@@ -3,6 +3,12 @@ QT += core gui widgets charts sql
 CONFIG += sdk_no_version_check
 CONFIG += c++17
 
+# Command Line Tools' clang doesn't auto-include arm_acle.h before Qt's
+# qyieldcpu.h calls the __yield() intrinsic, so -Werror turns the resulting
+# implicit-declaration warning into a hard build failure. Force-include the
+# header that actually declares it instead of relaxing the warning.
+QMAKE_CXXFLAGS += -include arm_acle.h
+
 # Source Files
 SOURCES += main.cpp \
            mainwindow.cpp \

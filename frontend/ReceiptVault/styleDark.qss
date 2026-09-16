@@ -32,7 +32,7 @@ QLabel {
 
 QLabel#titleLabel {
     color: #E0E0E0;
-    font: bold 35px "Palatino Linotype";
+    font: bold 35px "Palatino";
     text-align: center;
 }
 
@@ -46,26 +46,26 @@ QLabel#appTitle {
 
 QLabel#label_AnalyticsTitle {
     color: #E0E0E0;
-    font: bold 35px "Palatino Linotype";
+    font: bold 35px "Palatino";
     padding: 10px;
     text-align: center;
 }
 
 QLabel#label_BudgetsTitle {
     color: #E0E0E0;
-    font: bold 35px "Palatino Linotype";
+    font: bold 35px "Palatino";
     padding: 10px;
 }
 
 QLabel#label_CreateAccount {
     color: #E0E0E0;
-    font: bold 35px "Palatino Linotype";
+    font: bold 35px "Palatino";
     text-align: center;
 }
 
 QLabel#label_ReceiptsTitle {
     color: #E0E0E0;
-    font: bold 35px "Palatino Linotype";
+    font: bold 35px "Palatino";
     padding: 10px;
 }
 

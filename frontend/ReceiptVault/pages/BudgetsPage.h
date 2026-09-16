@@ -8,8 +8,6 @@
 #include <QComboBox> // for dropdown menus
 #include <QDateEdit> // for date selection
 #include <QFormLayout> // for form layouts
-#include <QVBoxLayout> // for vertical layouts
-#include <QHBoxLayout> // for horizontal layouts
 
 namespace Ui {
 class BudgetsPage; // forward declaration of ui class
@@ -36,6 +34,10 @@ private slots:
 private:
     int currentUserId; // stores the id of the current user
     Ui::BudgetsPage *ui; // pointer to ui elements
+
+    // shared by addBudget()/editBudget()
+    bool populateCategoryComboBox(QComboBox *comboBox, const QString &selectCategoryName = QString());
+    bool validateAmount(const QString &text, double &outAmount);
 };
 
 #endif

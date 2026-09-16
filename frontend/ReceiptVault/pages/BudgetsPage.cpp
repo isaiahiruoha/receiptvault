@@ -119,6 +119,46 @@ void BudgetsPage::loadBudgets(int userId)
     }
 }
 
+// Populates a category combobox, optionally pre-selecting one category by name.
+bool BudgetsPage::populateCategoryComboBox(QComboBox *comboBox, const QString &selectCategoryName)
+{
+    QSqlQuery categoryQuery(DatabaseManager::instance().getDatabase());
+    categoryQuery.prepare("SELECT category_id, category_name FROM expense_category");
+    if (!categoryQuery.exec()) {
+        qDebug() << "Failed to load categories:" << categoryQuery.lastError().text();
+        QMessageBox::critical(this, "Database Error", "Failed to load categories.");
+        return false;
+    }
+
+    while (categoryQuery.next()) {
+        int categoryId = categoryQuery.value("category_id").toInt();
+        QString categoryName = categoryQuery.value("category_name").toString();
+        comboBox->addItem(categoryName, categoryId);
+        if (!selectCategoryName.isEmpty() && categoryName == selectCategoryName) {
+            comboBox->setCurrentText(categoryName);
+        }
+    }
+    return true;
+}
+
+// Validates a budget amount string, matching the format used throughout this page.
+bool BudgetsPage::validateAmount(const QString &text, double &outAmount)
+{
+    QString trimmed = text.trimmed();
+    if (trimmed.isEmpty()) {
+        QMessageBox::warning(this, "Input Error", "Enter a budget amount.");
+        return false;
+    }
+
+    bool ok;
+    outAmount = trimmed.toDouble(&ok);
+    if (!ok || outAmount <= 0) {
+        QMessageBox::warning(this, "Input Error", "Enter a valid amount.");
+        return false;
+    }
+    return true;
+}
+
 // Handles adding a new budget
 void BudgetsPage::addBudget()
 {
@@ -131,17 +171,7 @@ void BudgetsPage::addBudget()
 
     // Category dropdown
     QComboBox *categoryComboBox = new QComboBox(&dialog);
-    QSqlQuery categoryQuery(DatabaseManager::instance().getDatabase());
-    categoryQuery.prepare("SELECT category_id, category_name FROM expense_category");
-    if (categoryQuery.exec()) {
-        while (categoryQuery.next()) {
-            int categoryId = categoryQuery.value("category_id").toInt();
-            QString categoryName = categoryQuery.value("category_name").toString();
-            categoryComboBox->addItem(categoryName, categoryId);
-        }
-    } else {
-        qDebug() << "Failed to load categories:" << categoryQuery.lastError().text();
-        QMessageBox::critical(this, "Database Error", "Failed to load categories.");
+    if (!populateCategoryComboBox(categoryComboBox)) {
         return;
     }
     formLayout.addRow("Category:", categoryComboBox);
@@ -173,16 +203,8 @@ void BudgetsPage::addBudget()
 
     // Process dialog result
     if (dialog.exec() == QDialog::Accepted) {
-        QString amountText = amountEdit->text().trimmed();
-        if (amountText.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Enter a budget amount.");
-            return;
-        }
-
-        bool ok;
-        double amount = amountEdit->text().toDouble(&ok);
-        if (!ok || amount <= 0) {
-            QMessageBox::warning(this, "Input Error", "Enter a valid amount.");
+        double amount;
+        if (!validateAmount(amountEdit->text(), amount)) {
             return;
         }
 
@@ -237,20 +259,7 @@ void BudgetsPage::editBudget()
 
     // Category dropdown
     QComboBox *categoryComboBox = new QComboBox(&dialog);
-    QSqlQuery categoryQuery(DatabaseManager::instance().getDatabase());
-    categoryQuery.prepare("SELECT category_id, category_name FROM expense_category");
-    if (categoryQuery.exec()) {
-        while (categoryQuery.next()) {
-            int categoryId = categoryQuery.value("category_id").toInt();
-            QString categoryName = categoryQuery.value("category_name").toString();
-            categoryComboBox->addItem(categoryName, categoryId);
-            if (categoryName == currentCategory) {
-                categoryComboBox->setCurrentText(categoryName);
-            }
-        }
-    } else {
-        qDebug() << "Failed to load categories:" << categoryQuery.lastError().text();
-        QMessageBox::critical(this, "Database Error", "Failed to load categories.");
+    if (!populateCategoryComboBox(categoryComboBox, currentCategory)) {
         return;
     }
     formLayout.addRow("Category:", categoryComboBox);
@@ -282,16 +291,8 @@ void BudgetsPage::editBudget()
 
     // Process dialog result
     if (dialog.exec() == QDialog::Accepted) {
-        QString amountText = amountEdit->text().trimmed();
-        if (amountText.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Enter a budget amount.");
-            return;
-        }
-
-        bool ok;
-        double amount = amountEdit->text().toDouble(&ok);
-        if (!ok || amount <= 0) {
-            QMessageBox::warning(this, "Input Error", "Enter a valid amount.");
+        double amount;
+        if (!validateAmount(amountEdit->text(), amount)) {
             return;
         }
 

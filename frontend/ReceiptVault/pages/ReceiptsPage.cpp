@@ -21,6 +21,7 @@ ReceiptsPage::ReceiptsPage(QWidget *parent)
     connect(ui->button_BackToDashboard, &QPushButton::clicked, this, &ReceiptsPage::navigateToDashboard);
     connect(ui->button_UploadReceipt, &QPushButton::clicked, this, &ReceiptsPage::uploadReceipt);
     connect(ui->button_EditReceipt, &QPushButton::clicked, this, &ReceiptsPage::editSelectedReceipt);
+    connect(ui->button_DeleteReceipt, &QPushButton::clicked, this, &ReceiptsPage::deleteSelectedReceipt);
 
     // connect the Edit Categories button to open the category manager dialog
     connect(ui->button_EditCategories, &QPushButton::clicked, this, [this]() {
@@ -150,4 +151,29 @@ void ReceiptsPage::editSelectedReceipt()
 
     // emit signal for editing the selected receipt
     emit editReceipt(expenseId);
+}
+
+// handles deleting the selected receipt
+void ReceiptsPage::deleteSelectedReceipt()
+{
+    QList<QTableWidgetItem*> selectedItems = ui->table_Receipts->selectedItems();
+    if (selectedItems.isEmpty()) {
+        QMessageBox::warning(this, "Selection Error", "Please select a receipt to delete.");
+        return;
+    }
+
+    int selectedRow = ui->table_Receipts->row(selectedItems.first());
+    QTableWidgetItem *storeItem = ui->table_Receipts->item(selectedRow, 0);
+    int expenseId = storeItem->data(Qt::UserRole).toInt();
+
+    QMessageBox::StandardButton reply = QMessageBox::question(this, "Delete Receipt",
+        "Are you sure you want to delete the selected receipt?", QMessageBox::Yes | QMessageBox::No);
+
+    if (reply == QMessageBox::Yes) {
+        if (DatabaseManager::instance().deleteExpense(expenseId, currentUserId)) {
+            ui->table_Receipts->removeRow(selectedRow);
+        } else {
+            QMessageBox::critical(this, "Database Error", "Failed to delete receipt.");
+        }
+    }
 }

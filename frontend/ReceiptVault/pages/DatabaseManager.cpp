@@ -34,6 +34,14 @@ bool DatabaseManager::openDatabase(const QString &databasePath)
         return false;
     } else {
         qDebug() << "Connected to the SQLite database successfully!";
+
+        // SQLite ignores FOREIGN KEY ... ON DELETE clauses unless this is set
+        // on every connection - it defaults to off, per-connection, always.
+        QSqlQuery pragmaQuery(db);
+        if (!pragmaQuery.exec("PRAGMA foreign_keys = ON;")) {
+            qDebug() << "Failed to enable foreign key enforcement: " << pragmaQuery.lastError().text();
+        }
+
         return createTables(); // Create tables if the database opened successfully
     }
 }
@@ -113,6 +121,12 @@ bool DatabaseManager::createTables()
         return false;
     }
 
+    // Foreign keys aren't auto-indexed; every query here filters by user_id.
+    query.exec("CREATE INDEX IF NOT EXISTS idx_expenses_user_id ON expenses(user_id)");
+    query.exec("CREATE INDEX IF NOT EXISTS idx_expenses_category_id ON expenses(category_id)");
+    query.exec("CREATE INDEX IF NOT EXISTS idx_budgets_user_id ON budgets(user_id)");
+    query.exec("CREATE INDEX IF NOT EXISTS idx_budgets_category_id ON budgets(category_id)");
+
     // Check if expense_category table is empty
     QString checkCategories = "SELECT COUNT(*) FROM expense_category";
     if (query.exec(checkCategories) && query.next()) {
@@ -149,7 +163,7 @@ bool DatabaseManager::createUser(const QString &username, const QString &hashedP
 bool DatabaseManager::verifyUser(const QString &username, const QString &hashedPassword)
 {
     QSqlQuery query(db);
-    query.prepare("SELECT * FROM users WHERE username = :username AND password = :password");
+    query.prepare("SELECT user_id FROM users WHERE username = :username AND password = :password");
     query.bindValue(":username", username);
     query.bindValue(":password", hashedPassword);
 
@@ -321,15 +335,31 @@ bool DatabaseManager::addExpense(int userId, int categoryId, const QString &stor
     return true;
 }
 
+bool DatabaseManager::deleteExpense(int expenseId, int userId)
+{
+    QSqlQuery query(db);
+    query.prepare("DELETE FROM expenses WHERE expense_id = :expense_id AND user_id = :user_id");
+    query.bindValue(":expense_id", expenseId);
+    query.bindValue(":user_id", userId);
+
+    if (!query.exec()) {
+        qDebug() << "Error deleting expense:" << query.lastError().text();
+        return false;
+    }
+    return true;
+}
+
 QList<QPair<QString, double>> DatabaseManager::getCategoryExpenses(int userId)
 {
     QList<QPair<QString, double>> results;
     QSqlQuery query(db);
-    query.prepare("SELECT expense_category.category_name, SUM(expenses.expense_amount) "
+    // LEFT JOIN so expenses whose category was deleted (category_id IS NULL)
+    // still count instead of silently disappearing from the breakdown.
+    query.prepare("SELECT COALESCE(expense_category.category_name, 'Uncategorized'), SUM(expenses.expense_amount) "
                   "FROM expenses "
-                  "JOIN expense_category ON expenses.category_id = expense_category.category_id "
+                  "LEFT JOIN expense_category ON expenses.category_id = expense_category.category_id "
                   "WHERE expenses.user_id = :user_id "
-                  "GROUP BY expense_category.category_name");
+                  "GROUP BY COALESCE(expense_category.category_name, 'Uncategorized')");
     query.bindValue(":user_id", userId);
 
     if (query.exec()) {
@@ -410,14 +440,17 @@ double DatabaseManager::getTotalSpending(int userId)
 }
 
 // method to get the top spending category
-QString DatabaseManager::getTopSpendingCategory(int userId) {
+QString DatabaseManager::getTopSpendingCategory(int userId)
+{
     QSqlQuery query(db);
+    // LEFT JOIN so expenses whose category was deleted still count toward
+    // the top-spending calculation instead of silently dropping out.
     query.prepare(R"(
-        SELECT expense_category.category_name, SUM(expenses.expense_amount) AS total
+        SELECT COALESCE(expense_category.category_name, 'Uncategorized') AS category_name, SUM(expenses.expense_amount) AS total
         FROM expenses
-        JOIN expense_category ON expenses.category_id = expense_category.category_id
+        LEFT JOIN expense_category ON expenses.category_id = expense_category.category_id
         WHERE expenses.user_id = :user_id
-        GROUP BY expense_category.category_name
+        GROUP BY category_name
         ORDER BY total DESC
         LIMIT 1
     )");
@@ -433,7 +466,8 @@ QString DatabaseManager::getTopSpendingCategory(int userId) {
 }
 
 // method to get average monthly spending
-double DatabaseManager::getAverageMonthlySpending(int userId) {
+double DatabaseManager::getAverageMonthlySpending(int userId)
+{
     QSqlQuery query(db);
     query.prepare(R"(
         SELECT SUM(expense_amount) / NULLIF(COUNT(DISTINCT strftime('%Y-%m', expense_date)), 0)

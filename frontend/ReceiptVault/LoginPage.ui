@@ -280,7 +280,7 @@ QLineEdit:focus {
       <string notr="true">QLabel {
     color: black; 
 
-    font: bold 35px &quot;Palatino Linotype&quot;;
+    font: bold 35px &quot;Palatino&quot;;
     text-align: center;
 }
 </string>

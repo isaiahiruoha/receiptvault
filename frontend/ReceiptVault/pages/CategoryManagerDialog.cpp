@@ -110,7 +110,7 @@ void CategoryManagerDialog::deleteCategory()
     // confirm deletion
     QMessageBox::StandardButton reply = QMessageBox::question(
         this, "Delete Category",
-        QString("Are you sure you want to delete the category '%1'? This will set the category to 'Uncategorized' for any associated receipts.")
+        QString("Are you sure you want to delete the category '%1'? Any associated receipts will have their category cleared, not deleted.")
             .arg(categoryName),
         QMessageBox::Yes | QMessageBox::No
         );

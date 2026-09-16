@@ -1,3 +1,9 @@
 
 # Python virtual environment (local only, never commit)
 backend/ml/venv/
+
+# OS clutter
+.DS_Store
+
+# Spotlight/Time Machine exclusion marker
+backend/ml/experiments/.metadata_never_index
