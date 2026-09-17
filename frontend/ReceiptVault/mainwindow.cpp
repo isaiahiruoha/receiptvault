@@ -269,6 +269,11 @@ QString MainWindow::normalizeReceiptDate(QString date)
         return "";
     }
 
+    if (dateParts[0].size() == 4 && dateParts[1].size() == 2 && dateParts[2].size() == 2) {
+        return date; // already yyyy-MM-dd - check this first, before the day gets
+                     // mistaken for a 2-digit year below
+    }
+
     QString yearPart = dateParts[2];
     if (yearPart.size() == 2) {
         // Two-digit years <=50 are assumed 20xx, otherwise 19xx - matches
@@ -284,9 +289,6 @@ QString MainWindow::normalizeReceiptDate(QString date)
             return dateParts[2] + '-' + dateParts[0] + '-' + dateParts[1];
         }
         return dateParts[2] + '-' + dateParts[1] + '-' + dateParts[0];
-    }
-    if (dateParts[0].size() == 4 && dateParts[1].size() == 2 && dateParts[2].size() == 2) {
-        return date; // already yyyy-MM-dd
     }
     return "";
 }
