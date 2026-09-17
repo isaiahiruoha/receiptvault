@@ -31,6 +31,7 @@ ui_*.h
 qrc_*.cpp
 qmake_qmake_qm_files.qrc
 .qtc_clangd/
+target_wrapper.sh
 Thumbs.db
 *.res
 *.rc
